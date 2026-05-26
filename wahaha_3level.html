@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>娃哈哈AD钙奶30周年 · 三关趣味挑战</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: linear-gradient(145deg, #1b6b2b 0%, #0e4a1c 100%);
+            font-family: 'Segoe UI', 'PingFang SC', Roboto, 'Helvetica Neue', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* 主面板 */
+        .game-hub {
+            max-width: 600px;
+            width: 100%;
+            background: #fef3c7;
+            background-image: radial-gradient(circle at 10% 20%, rgba(255,245,200,0.8) 2%, transparent 2.5%);
+            background-size: 28px 28px;
+            border-radius: 64px 64px 48px 48px;
+            box-shadow: 0 25px 40px rgba(0,0,0,0.3);
+            padding: 20px;
+        }
+
+        .game-panel {
+            background: #fffbee;
+            border-radius: 48px;
+            padding: 20px 18px 30px;
+            box-shadow: inset 0 1px 4px #fff8, 0 8px 18px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+
+        h1 {
+            margin: 0 0 5px;
+            font-size: 1.8rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            color: #266b3c;
+        }
+
+        .level-badge {
+            background: #ffcf4a;
+            border-radius: 40px;
+            padding: 6px 16px;
+            display: inline-block;
+            font-weight: bold;
+            margin: 10px 0;
+            color: #3c280d;
+        }
+
+        /* 关卡头部 */
+        .level-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            background: #2c2b28;
+            border-radius: 60px;
+            padding: 8px 20px;
+            margin: 15px 0;
+            color: #ffefb9;
+        }
+        .level-header span {
+            font-size: 1.1rem;
+        }
+        .level-header .score {
+            background: #1e1b16;
+            padding: 4px 16px;
+            border-radius: 40px;
+            font-weight: bold;
+        }
+
+        /* 游戏容器 */
+        .game-stage {
+            background: #9fd3e7;
+            border-radius: 48px;
+            padding: 12px;
+            margin: 10px 0;
+            box-shadow: inset 0 0 0 3px white, 0 8px 20px rgba(0,0,0,0.2);
+        }
+
+        /* 记忆翻牌网格 */
+        .memory-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            padding: 10px;
+        }
+        .card {
+            aspect-ratio: 1 / 1;
+            background: #f9c46b;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.4rem;
+            cursor: pointer;
+            transition: 0.1s;
+            box-shadow: 0 6px 0 #a45d2e;
+            transform: translateY(-2px);
+        }
+        .card.flipped, .card.matched {
+            background: #e9f5db;
+            box-shadow: 0 2px 0 #a45d2e;
+            transform: translateY(2px);
+        }
+        .card.matched {
+            visibility: hidden;
+            pointer-events: none;
+            opacity: 0;
+        }
+
+        /* 接住钙奶canvas */
+        canvas {
+            width: 100%;
+            height: auto;
+            background: #b7def0;
+            border-radius: 36px;
+            display: block;
+            cursor: grab;
+        }
+        canvas:active { cursor: grabbing; }
+
+        /* 问答选项 */
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin: 20px 0;
+        }
+        .quiz-btn {
+            background: #ffeaac;
+            border: 2px solid #d4a373;
+            border-radius: 60px;
+            padding: 12px;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+        .quiz-btn:hover {
+            background: #ffe083;
+        }
+
+        .next-btn, .reset-main {
+            background: #ffcf4a;
+            border: none;
+            font-size: 1.2rem;
+            font-weight: bold;
+            padding: 10px 24px;
+            border-radius: 40px;
+            margin-top: 15px;
+            cursor: pointer;
+        }
+
+        .message {
+            margin-top: 12px;
+            font-weight: bold;
+            color: #c97e2c;
+        }
+
+        footer {
+            font-size: 0.7rem;
+            margin-top: 20px;
+            color: #b87a39;
+        }
+        button:active { transform: scale(0.97); }
+
+        /* 开局引导弹窗 */
+        .start-pop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: rgba(0,0,0,0.65);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+        }
+        .pop-box {
+            background: #fef3c7;
+            padding: 30px 25px;
+            border-radius: 24px;
+            text-align: center;
+            max-width: 280px;
+        }
+        .pop-box h3 {
+            color: #266b3c;
+            margin: 0 0 15px;
+            font-size: 1.4rem;
+        }
+        .pop-box p {
+            color: #c97e2c;
+            line-height: 1.6;
+            margin: 0 0 20px;
+        }
+        .pop-box button {
+            background: #ffcf4a;
+            border: none;
+            padding: 8px 28px;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .hide {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+<!-- 开局引导弹窗 -->
+<div class="start-pop" id="startPop">
+    <div class="pop-box">
+        <h3>🥛 AD钙奶三关挑战</h3>
+        <p>记忆翻牌 · 接瓶闯关 · 情怀问答<br>一起来重温童年时光吧！</p>
+        <button id="startBtn">开始挑战</button>
+    </div>
+</div>
+
+<div class="game-hub">
+    <div class="game-panel" id="appRoot">
+        <h1>🥛 娃哈哈AD钙奶 🧸<br><span style="font-size:0.9rem;">三关挑战 · 重温甜蜜时光</span></h1>
+        <div class="level-badge" id="levelName">第1关 · 记忆翻牌</div>
+        <div class="level-header">
+            <span>🎯 目标 / 得分</span>
+            <span class="score" id="gameScore">0</span>
+        </div>
+        <div id="gameContent"></div>
+        <div id="controlArea"></div>
+        <footer>相伴三十载，趣味闯关重拾童年美好 | 原创互动H5</footer>
+    </div>
+</div>
+
+<script>
+    // ---------- 全局状态 ----------
+    let currentLevel = 1;      // 1:记忆 2:接奶 3:问答
+    let levelScores = {1:0, 2:0, 3:0};
+    let levelCleared = {1:false, 2:false, 3:false};
+    
+    // 记忆翻牌专用变量
+    let memoryCards = [];
+    let flippedIndexes = [];
+    let lockBoard = false;
+    let matchesCount = 0;
+    let memoryPairs = 0;
+    
+    // 接钙奶专用
+    let catcherGame = null;
+    
+    // 问答专用
+    let quizAnswered = false;
+    let quizCorrect = false;
+    const quizData = {
+        question: "娃哈哈AD钙奶诞生于哪一年？",
+        options: ["1994", "1996", "1998", "2000"],
+        correct: 1   // 索引1 => 1996
+    };
+    
+    // DOM 元素
+    const levelNameDiv = document.getElementById('levelName');
+    const gameScoreSpan = document.getElementById('gameScore');
+    const gameContentDiv = document.getElementById('gameContent');
+    const controlArea = document.getElementById('controlArea');
+    
+    // 更新UI分数
+    function updateScoreUI() {
+        let currentSc = (currentLevel === 1) ? levelScores[1] : (currentLevel === 2) ? levelScores[2] : levelScores[3];
+        gameScoreSpan.innerText = currentSc;
+    }
+    
+    // 进入下一关
+    function goToNextLevel() {
+        if(currentLevel === 1 && !levelCleared[1]) return;
+        if(currentLevel === 2 && !levelCleared[2]) return;
+        if(currentLevel === 3) {
+            // 通关啦
+            gameContentDiv.innerHTML = `<div style="padding:30px; text-align:center">🎉🎉🎉 太棒啦！三关全通 🎉🎉🎉<br>✨ 你就是AD钙奶真爱粉 ✨<br><img style="font-size:3rem">🥛🧸💚</div>`;
+            controlArea.innerHTML = `<button class="reset-main" id="fullReset">🔄 重新挑战</button>`;
+            const resetBtn = document.getElementById('fullReset');
+            if(resetBtn) resetBtn.onclick = () => resetAllGame();
+            levelNameDiv.innerText = '🏆 通关成就 🏆';
+            return;
+        }
+        currentLevel++;
+        renderCurrentLevel();
+    }
+    
+    // 重置整个游戏
+    function resetAllGame() {
+        currentLevel = 1;
+        levelScores = {1:0, 2:0, 3:0};
+        levelCleared = {1:false, 2:false, 3:false};
+        if(catcherGame && catcherGame.stopGame) catcherGame.stopGame();
+        renderCurrentLevel();
+    }
+    
+    // ************ 记忆翻牌 ************
+    function initMemoryGame() {
+        const icons = ['🥛','🧸','💚','✨','🥛','🧸','💚','✨'];
+        // 洗牌
+        for (let i = icons.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [icons[i], icons[j]] = [icons[j], icons[i]];
+        }
+        memoryCards = icons.map((icon, idx) => ({ icon, matched: false, flipped: false, id: idx }));
+        flippedIndexes = [];
+        lockBoard = false;
+        matchesCount = 0;
+        memoryPairs = icons.length / 2;
+        levelScores[1] = 0;
+        updateScoreUI();
+        renderMemoryBoard();
+    }
+    
+    function renderMemoryBoard() {
+        const grid = document.createElement('div');
+        grid.className = 'memory-grid';
+        memoryCards.forEach((card, idx) => {
+            const cardDiv = document.createElement('div');
+            cardDiv.className = `card ${card.matched ? 'matched' : (card.flipped ? 'flipped' : '')}`;
+            cardDiv.innerText = (card.flipped || card.matched) ? card.icon : '❓';
+            if(!card.matched && !lockBoard) {
+                cardDiv.onclick = () => flipCard(idx);
+            }
+            grid.appendChild(cardDiv);
+        });
+        gameContentDiv.innerHTML = '';
+        gameContentDiv.appendChild(grid);
+        // 胜利判定
+        if(matchesCount === memoryPairs && memoryPairs>0) {
+            levelCleared[1] = true;
+            levelNameDiv.innerText = '✅ 第1关通过！进入下一关 ✅';
+            controlArea.innerHTML = `<button class="next-btn" id="nextLevelBtn">➡️ 第2关 · 接住钙奶 ⬅️</button>`;
+            const nextBtn = document.getElementById('nextLevelBtn');
+            if(nextBtn) nextBtn.onclick = () => goToNextLevel();
+        } else {
+            controlArea.innerHTML = `<button class="reset-main" id="resetMemoryBtn">🔄 重新洗牌</button>`;
+            const resetMem = document.getElementById('resetMemoryBtn');
+            if(resetMem) resetMem.onclick = () => initMemoryGame();
+        }
+    }
+    
+    function flipCard(idx) {
+        if(lockBoard) return;
+        if(memoryCards[idx].matched) return;
+        if(memoryCards[idx].flipped) return;
+        memoryCards[idx].flipped = true;
+        flippedIndexes.push(idx);
+        if(flippedIndexes.length === 2) {
+            lockBoard = true;
+            const idxA = flippedIndexes[0];
+            const idxB = flippedIndexes[1];
+            if(memoryCards[idxA].icon === memoryCards[idxB].icon) {
+                // 配对成功
+                memoryCards[idxA].matched = true;
+                memoryCards[idxB].matched = true;
+                memoryCards[idxA].flipped = false;
+                memoryCards[idxB].flipped = false;
+                matchesCount++;
+                levelScores[1] = matchesCount;
+                updateScoreUI();
+                flippedIndexes = [];
+                lockBoard = false;
+                renderMemoryBoard();
+            } else {
+                setTimeout(() => {
+                    memoryCards[idxA].flipped = false;
+                    memoryCards[idxB].flipped = false;
+                    flippedIndexes = [];
+                    lockBoard = false;
+                    renderMemoryBoard();
+                }, 700);
+            }
+        }
+        renderMemoryBoard();
+    }
+    
+    // ************ 接住钙奶小游戏 (原创 Canvas) ************
+    class CatchGame {
+        constructor(container, onSuccess) {
+            this.container = container;
+            this.onSuccess = onSuccess;
+            this.score = 0;
+            this.gameRunning = true;
+            this.items = [];
+            this.basketX = 210;
+            this.frameCount = 0;
+            this.animationId = null;
+            this.targetScore = 15;   // 接住15个过关
+            this.initCanvas();
+        }
+        initCanvas() {
+            this.canvas = document.createElement('canvas');
+            this.canvas.width = 500;
+            this.canvas.height = 500;
+            this.canvas.style.width = '100%';
+            this.canvas.style.height = 'auto';
+            this.canvas.style.aspectRatio = '1 / 1';
+            this.ctx = this.canvas.getContext('2d');
+            this.container.innerHTML = '';
+            this.container.appendChild(this.canvas);
+            this.setupEvents();
+            this.startLoop();
+        }
+        setupEvents() {
+            const moveHandler = (e) => {
+                if(!this.gameRunning) return;
+                let clientX;
+                if(e.touches) clientX = e.touches[0].clientX;
+                else clientX = e.clientX;
+                const rect = this.canvas.getBoundingClientRect();
+                const scale = 500 / rect.width;
+                let canvasX = (clientX - rect.left) * scale;
+                canvasX = Math.min(Math.max(canvasX, 30), 470);
+                this.basketX = canvasX - 45;
+                this.basketX = Math.min(Math.max(this.basketX, 5), 500-90);
+            };
+            this.canvas.addEventListener('mousemove', moveHandler);
+            this.canvas.addEventListener('touchmove', moveHandler, {passive: false});
+            this.canvas.addEventListener('touchstart', moveHandler);
+        }
+        createBottle() {
+            return {
+                x: 20 + Math.random() * 440,
+                y: -30,
+                radius: 16,
+                speed: 2 + Math.random() * 2.5
+            };
+        }
+        updateGame() {
+            if(!this.gameRunning) return;
+            for(let i=0;i<this.items.length;i++) this.items[i].y += this.items[i].speed;
+            // 碰撞
+            for(let i=this.items.length-1;i>=0;i--) {
+                const item = this.items[i];
+                const itemLeft = item.x - 16, itemRight = item.x+16;
+                const itemTop = item.y-20, itemBottom = item.y+20;
+                const basketLeft = this.basketX, basketRight = this.basketX+90;
+                const basketTop = 430, basketBottom = 470;
+                if(itemBottom > basketTop && itemTop < basketBottom && itemRight > basketLeft && itemLeft < basketRight) {
+                    this.score++;
+                    this.items.splice(i,1);
+                    levelScores[2] = this.score;
+                    updateScoreUI();
+                    if(this.score >= this.targetScore) {
+                        this.gameWin();
+                    }
+                    continue;
+                }
+                if(item.y > 530) this.items.splice(i,1);
+            }
+            this.frameCount++;
+            if(this.frameCount % 28 === 0 && this.gameRunning && this.score < this.targetScore) {
+                this.items.push(this.createBottle());
+            }
+        }
+        draw() {
+            this.ctx.clearRect(0,0,500,500);
+            this.ctx.fillStyle = '#b7def0';
+            this.ctx.fillRect(0,0,500,500);
+            // 篮子
+            this.ctx.fillStyle = '#d6a15a';
+            this.ctx.beginPath();
+            this.ctx.roundRect(this.basketX, 435, 90, 32, 12);
+            this.ctx.fill();
+            this.ctx.fillStyle = '#b57c3c';
+            this.ctx.fillText('🥛', this.basketX+35, 462);
+            // 奶瓶
+            for(let item of this.items) {
+                this.ctx.fillStyle = '#fbf5cf';
+                this.ctx.beginPath();
+                this.ctx.roundRect(item.x-16, item.y-18, 32, 38, 8);
+                this.ctx.fill();
+                this.ctx.fillStyle = '#2f9e44';
+                this.ctx.fillText('AD', item.x-8, item.y);
+            }
+            this.ctx.fillStyle = '#2c3e2b';
+            this.ctx.font = 'bold 18px "Segoe UI"';
+            this.ctx.fillText(`🥛 ${this.score}/${this.targetScore}`, 20, 50);
+        }
+        gameWin() {
+            if(!this.gameRunning) return;
+            this.gameRunning = false;
+            if(this.animationId) cancelAnimationFrame(this.animationId);
+            levelCleared[2] = true;
+            levelNameDiv.innerText = '🎉 第2关过关！进入情怀问答 🎉';
+            controlArea.innerHTML = `<button class="next-btn" id="nextToQuiz">📖 第3关 · 情怀问答 📖</button>`;
+            const nextBtn = document.getElementById('nextToQuiz');
+            if(nextBtn) nextBtn.onclick = () => goToNextLevel();
+            this.container.innerHTML += `<div style="text-align:center; margin-top:12px;">✨ 接住${this.score}瓶！过关 ✨</div>`;
+        }
+        startLoop() {
+            const step = () => {
+                if(this.gameRunning && this.score < this.targetScore) this.updateGame();
+                this.draw();
+                this.animationId = requestAnimationFrame(step);
+            };
+            step();
+        }
+        stopGame() {
+            this.gameRunning = false;
+            if(this.animationId) cancelAnimationFrame(this.animationId);
+        }
+    }
+    
+    function startCatchGame() {
+        if(catcherGame) catcherGame.stopGame();
+        levelScores[2] = 0;
+        updateScoreUI();
+        levelCleared[2] = false;
+        catcherGame = new CatchGame(gameContentDiv, () => {});
+    }
+    
+    // ************ 情怀问答 ************
+    function renderQuiz() {
+        quizAnswered = false;
+        quizCorrect = false;
+        levelScores[3] = 0;
+        updateScoreUI();
+        gameContentDiv.innerHTML = `
+            <div style="padding:15px; font-size:1.2rem; font-weight:bold;">❓ ${quizData.question}</div>
+            <div class="quiz-options" id="quizOptions"></div>
+        `;
+        const optionsDiv = document.getElementById('quizOptions');
+        quizData.options.forEach((opt, idx) => {
+            const btn = document.createElement('button');
+            btn.innerText = opt;
+            btn.className = 'quiz-btn';
+            btn.onclick = () => handleAnswer(idx);
+            optionsDiv.appendChild(btn);
+        });
+        controlArea.innerHTML = `<button class="reset-main" id="resetQuiz">🔄 重选答案</button>`;
+        const resetQuizBtn = document.getElementById('resetQuiz');
+        if(resetQuizBtn) resetQuizBtn.onclick = () => renderQuiz();
+        
+        function handleAnswer(selected) {
+            if(quizAnswered) return;
+            quizAnswered = true;
+            const isCorrect = (selected === quizData.correct);
+            if(isCorrect) {
+                quizCorrect = true;
+                levelScores[3] = 1;
+                updateScoreUI();
+                levelCleared[3] = true;
+                gameContentDiv.innerHTML += `<div class="message">🎉 回答正确！1996年AD钙奶诞生 🎉<br>🧸 通关三关，满分回忆！</div>`;
+                controlArea.innerHTML = `<button class="next-btn" id="completeGame">🏆 完成挑战 🏆</button>`;
+                const completeBtn = document.getElementById('completeGame');
+                if(completeBtn) completeBtn.onclick = () => goToNextLevel();
+            } else {
+                gameContentDiv.innerHTML += `<div class="message">❌ 不对哦，再回忆一下AD钙奶的诞生年份~</div>`;
+                quizAnswered = false;
+            }
+        }
+    }
+    
+    // 渲染当前关卡
+    function renderCurrentLevel() {
+        // 更新关卡名
+        if(currentLevel === 1) levelNameDiv.innerText = '第1关 · 记忆翻牌 🃏';
+        else if(currentLevel === 2) levelNameDiv.innerText = '第2关 · 接住钙奶 🧺';
+        else levelNameDiv.innerText = '第3关 · 情怀问答 💬';
+        updateScoreUI();
+        
+        if(currentLevel === 1) {
+            if(catcherGame) catcherGame.stopGame();
+            initMemoryGame();
+        } 
+        else if(currentLevel === 2) {
+            startCatchGame();
+        }
+        else if(currentLevel === 3) {
+            if(catcherGame) catcherGame.stopGame();
+            renderQuiz();
+        }
+    }
+
+    // 开局弹窗逻辑
+    const startPop = document.getElementById('startPop');
+    const startBtn = document.getElementById('startBtn');
+    startBtn.addEventListener('click', () => {
+        startPop.classList.add('hide');
+        renderCurrentLevel();
+    });
+</script>
+</body>
+</html>
